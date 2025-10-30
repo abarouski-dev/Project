@@ -106,3 +106,8 @@ void AABasePlayerCharacter::EquipWeapon(AWeapon* Weapon)
 
 	CurrentWeapon = Weapon;
 }
+
+void AABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}

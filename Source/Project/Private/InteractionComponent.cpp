@@ -28,5 +28,5 @@ void UInteractionComponent::Interact()
         }
     }
 
-    DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f);
+    DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f)
 }

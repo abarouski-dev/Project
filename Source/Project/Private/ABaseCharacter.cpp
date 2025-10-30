@@ -14,8 +14,3 @@ void AABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-
-void AABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
