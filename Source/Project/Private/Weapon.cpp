@@ -1,19 +1,14 @@
 #include "Weapon.h"
-#include "GameFramework/Character.h"
+#include "ABasePlayerCharacter.h"
 #include "Components/SkeletalMeshComponent.h"
 
 void AWeapon::PickUp_Implementation(AActor* Caller)
 {
     if (!Caller) return;
 
-    ACharacter* Character = Cast<ACharacter>(Caller);
-    if (Character)
+    AABasePlayerCharacter* Player = Cast<AABasePlayerCharacter>(Caller);
+    if (Player)
     {
-        USkeletalMeshComponent* Mesh = Character->GetMesh();
-        if (Mesh)
-        {
-            FName SocketName("WeaponSocket");
-            AttachToComponent(Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, SocketName);
-        }
+        Player->EquipWeapon(this);
     }
 }

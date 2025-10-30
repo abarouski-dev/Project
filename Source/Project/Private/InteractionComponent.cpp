@@ -1,17 +1,11 @@
 #include "InteractionComponent.h"
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
-#include "InteractionInterface.h"
 #include "DrawDebugHelpers.h"
 
 UInteractionComponent::UInteractionComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
-}
-
-void UInteractionComponent::BeginPlay()
-{
-    Super::BeginPlay();
 }
 
 void UInteractionComponent::Interact()
@@ -20,8 +14,7 @@ void UInteractionComponent::Interact()
     if (!Owner) return;
 
     FVector Start = Owner->GetActorLocation();
-    FVector Forward = Owner->GetActorForwardVector();
-    FVector End = Start + Forward * InteractionDistance;
+    FVector End = Start + Owner->GetActorForwardVector() * InteractionDistance;
 
     FHitResult Hit;
     FCollisionQueryParams Params;
@@ -34,4 +27,6 @@ void UInteractionComponent::Interact()
             IInteractionInterface::Execute_Interact(Hit.GetActor(), Owner);
         }
     }
+
+    DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f);
 }

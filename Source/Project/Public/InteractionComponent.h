@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "InteractionInterface.h"
 #include "InteractionComponent.generated.h"
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -12,10 +13,6 @@ class PROJECT_API UInteractionComponent : public UActorComponent
 public:
     UInteractionComponent();
 
-protected:
-    virtual void BeginPlay() override;
-
-public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
     float InteractionDistance = 200.f;
 

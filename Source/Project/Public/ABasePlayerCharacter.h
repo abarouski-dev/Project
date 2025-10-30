@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Weapon.h"
 #include "ABaseCharacter.h"
 #include "InputActionValue.h"
 #include "InteractionComponent.h"
@@ -15,7 +16,8 @@ public:
 	AABasePlayerCharacter();
 
 	UFUNCTION(BlueprintCallable)
-	void Interact();
+	
+	void EquipWeapon(AWeapon* Weapon);
 
 protected:
 	virtual void BeginPlay() override;
@@ -23,6 +25,7 @@ protected:
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	void Interact(const FInputActionValue& Value);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	class USpringArmComponent* CameraBoom;
@@ -39,6 +42,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInputAction* LookAction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	class UInputAction* InteractAction;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInteractionComponent* InteractionComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	AWeapon* CurrentWeapon;
 };

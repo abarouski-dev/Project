@@ -19,13 +19,14 @@ AABasePlayerCharacter::AABasePlayerCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 }
 
 void AABasePlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Подключаем Mapping Context
 	if (APlayerController* PC = Cast<APlayerController>(Controller))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -51,7 +52,7 @@ void AABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	{
 		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AABasePlayerCharacter::Move);
 		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &AABasePlayerCharacter::Look);
-		//Input->BindAction("Interact", IE_Pressed, this, &AABasePlayerCharacter::Interact);
+		Input->BindAction(InteractAction, ETriggerEvent::Triggered, this, &AABasePlayerCharacter::Interact);
 	}
 }
 
@@ -78,10 +79,30 @@ void AABasePlayerCharacter::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(-LookAxis.Y);
 }
 
-void AABasePlayerCharacter::Interact()
+void AABasePlayerCharacter::Interact(const FInputActionValue& Value)
 {
 	if (InteractionComponent)
 	{
 		InteractionComponent->Interact();
 	}
+}
+
+void AABasePlayerCharacter::EquipWeapon(AWeapon* Weapon)
+{
+	if (!Weapon) return;
+
+	USkeletalMeshComponent* CharacterMesh = GetMesh();
+	if (CharacterMesh)
+	{
+		FName SocketName("WeaponSocket");
+		Weapon->AttachToComponent(CharacterMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, SocketName);
+
+		if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Weapon->GetRootComponent()))
+		{
+			PrimComp->SetSimulatePhysics(false);
+			PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+
+	CurrentWeapon = Weapon;
 }
