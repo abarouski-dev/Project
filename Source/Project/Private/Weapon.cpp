@@ -3,17 +3,20 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
-#include "BreakableVase.h"  
+#include "GeometryCollection/GeometryCollectionComponent.h"
+#include "Chaos/ChaosGameplayEventDispatcher.h"
 
 void AWeapon::PickUp_Implementation(AActor* Caller)
 {
     if (!Caller) return;
 
     AABasePlayerCharacter* Player = Cast<AABasePlayerCharacter>(Caller);
-    if (Player)
+    if (Player && !Player->CurrentWeapon)
     {
         Player->EquipWeapon(this);
+        SubscribeHit();
     }
+
 }
 
 AWeapon::AWeapon()
@@ -26,6 +29,7 @@ AWeapon::AWeapon()
     WeaponCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     WeaponCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
     WeaponCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
 }
 
 void AWeapon::EnableCollision()
@@ -40,17 +44,25 @@ void AWeapon::DisableCollision()
     WeaponCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     WeaponCollision->SetHiddenInGame(true);
     WeaponCollision->SetVisibility(false);
-}   
+}
 
-void AWeapon::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other,
-    UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation,
-    FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+void AWeapon::SubscribeHit()
 {
-    UE_LOG(LogTemp, Log, TEXT("Hit actor: %s"), *Other->GetName());
-
-
-    if (ABreakableVase* Vase = Cast<ABreakableVase>(Other))
+    if (!WeaponCollision->OnComponentBeginOverlap.IsAlreadyBound(this, &AWeapon::OnOverlapStart))
     {
-        Vase->ApplyHit(Hit);
+        WeaponCollision->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnOverlapStart);
+    }
+}
+
+void AWeapon::OnOverlapStart(UPrimitiveComponent* OverLappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& Hit)
+{
+
+    if (ownerCharacter && ownerCharacter == OtherActor) return;
+
+
+    if (OtherActor->Implements<UCombat>())
+    {
+        ICombat::Execute_GetHit(OtherActor, 50);
+		DisableCollision();
     }
 }

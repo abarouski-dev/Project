@@ -14,7 +14,7 @@ public:
     UInteractionComponent();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interaction")
-    float InteractionDistance = 200.f;
+    float InteractionDistance = 550.f;
 
     void Interact();
 };

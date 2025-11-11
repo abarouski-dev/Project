@@ -19,13 +19,17 @@ public:
 	
 	void EquipWeapon(AWeapon* Weapon);
 
-	void EnableWeaponCollision();
+	virtual void EnableWeaponCollision() override;
 
-	void DisableWeaponCollision();
+	virtual void DisableWeaponCollision() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
+	AWeapon* CurrentWeapon;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Death() override;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
@@ -55,9 +59,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Input")
 	class UInteractionComponent* InteractionComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-	AWeapon* CurrentWeapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;

@@ -1,7 +1,13 @@
 #include "InteractionComponent.h"
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
+#include "Engine/EngineTypes.h"
 #include "DrawDebugHelpers.h"
+#include "Camera/CameraComponent.h"
+#include "CollisionQueryParams.h"
+#include "Components/PrimitiveComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/OverlapResult.h"
 
 UInteractionComponent::UInteractionComponent()
 {
@@ -13,20 +19,53 @@ void UInteractionComponent::Interact()
     AActor* Owner = GetOwner();
     if (!Owner) return;
 
-    FVector Start = Owner->GetActorLocation();
-    FVector End = Start + Owner->GetActorForwardVector() * InteractionDistance;
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (!PC) return;
 
-    FHitResult Hit;
+    FVector CameraLocation;
+    FRotator CameraRotation;
+    PC->GetPlayerViewPoint(CameraLocation, CameraRotation);
+
+    FVector Start = CameraLocation;
+    FVector Forward = CameraRotation.Vector();
+
+    float SphereRadius = 120.f;
+
+    TArray<FHitResult> HitResults;
     FCollisionQueryParams Params;
     Params.AddIgnoredActor(Owner);
 
-    if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+    if (AActor* Parent = Owner->GetAttachParentActor())
     {
-        if (Hit.GetActor() && Hit.GetActor()->Implements<UInteractionInterface>())
-        {
-            IInteractionInterface::Execute_Interact(Hit.GetActor(), Owner);
-        }
+        Params.AddIgnoredActor(Parent);
     }
 
-    DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 2.f);
+    int32 Steps = 10;
+
+    for (int32 i = 1; i <= Steps; i++)
+    {
+        FVector Center = Start + Forward * (InteractionDistance * i / Steps);
+        TArray<FOverlapResult> Overlaps;
+
+        bool bHit = GetWorld()->OverlapMultiByChannel(
+            Overlaps,
+            Center,
+            FQuat::Identity,
+            ECC_Visibility,
+            FCollisionShape::MakeSphere(SphereRadius),
+            Params
+        );
+
+        DrawDebugSphere(GetWorld(), Center, SphereRadius, 16, FColor::Green, false, 1.5f);
+
+        for (auto& Overlap : Overlaps)
+        {
+            AActor* Actor = Overlap.GetActor();
+            if (Actor && Actor->Implements<UInteractionInterface>())
+            {
+                IInteractionInterface::Execute_Interact(Actor, Owner);
+                return;
+            }
+        }
+    }
 }

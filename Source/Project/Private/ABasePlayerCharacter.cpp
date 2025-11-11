@@ -78,8 +78,6 @@ void AABasePlayerCharacter::Look(const FInputActionValue& Value)
 	FVector2D LookAxis = Value.Get<FVector2D>();
 	AddControllerYawInput(LookAxis.X);
 	AddControllerPitchInput(-LookAxis.Y);
-
-	UE_LOG(LogTemp, Warning, TEXT("bIsAttacking = %s"), bIsAttacking ? TEXT("true") : TEXT("false"));
 }
 
 void AABasePlayerCharacter::Interact(const FInputActionValue& Value)
@@ -108,6 +106,7 @@ void AABasePlayerCharacter::EquipWeapon(AWeapon* Weapon)
 	}
 
 	CurrentWeapon = Weapon;
+	CurrentWeapon->ownerCharacter = this;
 	CurrentWeapon->DisableCollision();
 }
 
@@ -131,4 +130,9 @@ void AABasePlayerCharacter::DisableWeaponCollision()
 	if (CurrentWeapon)
 		CurrentWeapon->DisableCollision();
 	bIsAttacking = false;
+}
+
+void AABasePlayerCharacter::Death()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Player is dead"));
 }

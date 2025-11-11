@@ -1,13 +1,15 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "DisableWeaponCollisionNotify.h"
 #include "ABasePlayerCharacter.h"
+#include "ABaseEnemyCharacter.h"
 
 void UDisableWeaponCollisionNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation)
 {
-	if (AABasePlayerCharacter* Player = Cast<AABasePlayerCharacter>(MeshComp->GetOwner()))
+	if (AABaseCharacter* Player = Cast<AABaseCharacter>(MeshComp->GetOwner()))
 	{
 		Player->DisableWeaponCollision();
+	}
+	else if (AABaseEnemyCharacter* Enemy = Cast<AABaseEnemyCharacter>(MeshComp->GetOwner()))
+	{
+		Enemy->DisableWeaponCollision();
 	}
 }
