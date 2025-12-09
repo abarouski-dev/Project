@@ -1,10 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Weapon.h"
 #include "ABaseCharacter.h"
 #include "InputActionValue.h"
-#include "InteractionComponent.h"
+#include "PownStateEnum.h"
 #include "ABasePlayerCharacter.generated.h"
 
 UCLASS()
@@ -17,7 +16,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	
-	void EquipWeapon(AWeapon* Weapon);
+	void EquipWeapon(class AWeapon* Weapon);
 
 	virtual void EnableWeaponCollision() override;
 
@@ -29,12 +28,15 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void Death() override;
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void Interact(const FInputActionValue& Value);
 	void Attack(const FInputActionValue& Value);
+
+	virtual void GetHit_Implementation(int value) override;
+
+	virtual void Death_Implementation() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	class USpringArmComponent* CameraBoom;
@@ -62,6 +64,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat")
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	UAnimMontage* GetHitMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	USoundBase* MySound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+	ECharacterState CharacterState;
 
 	bool bIsAttacking = false;
 };

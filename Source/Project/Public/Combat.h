@@ -17,4 +17,6 @@ class ICombat
 public:
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
     void GetHit(int value);
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
+    void Death();
 };

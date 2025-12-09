@@ -2,6 +2,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "AIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 AABaseEnemyCharacter::AABaseEnemyCharacter()
 {
@@ -28,31 +29,58 @@ void AABaseEnemyCharacter::BeginPlay()
         CurrentWeapon->SubscribeHit();
         CurrentWeapon->ownerCharacter = this;
         DisableWeaponCollision();
+        if (CurrentWeapon->IsEquiped())
+        {
+            return;
+        }
+    }
+
+    AAIController* AI = Cast<AAIController>(GetController());
+
+
+    if (AI)
+    {
+        UBlackboardComponent* BB = AI->GetBlackboardComponent();
+        if (BB)
+        {
+            BB->SetValueAsObject("ChassingTarget", TargetActor);
+        }
     }
 }
 
 void AABaseEnemyCharacter::OnSeePawn(APawn* Pawn)
 {
-    if (!Pawn) return;
+    UE_LOG(LogTemp, Warning, TEXT("AI %s!, x - %f | y - %f | %f"), *Pawn->GetName(), Pawn->GetActorLocation().X, Pawn->GetActorLocation().Y, FVector::Dist(GetActorLocation(), TargetActor->GetActorLocation()))
 
+        float Distance = FVector::Dist(GetActorLocation(), Pawn->GetActorLocation());
+    TargetActor->TeleportTo(Pawn->GetActorLocation(), FRotator::ZeroRotator);
 
-    AAIController* AICon = Cast<AAIController>(GetController());
+    if (Distance < AttackRange && !bIsAttacking)
+        CharacterState = EEnamyState::Attacking;
 
-    float Distance = FVector::Dist(GetActorLocation(), Pawn->GetActorLocation());
-
-    if (Distance > AttackRange && !bIsAttacking)
-    {
-        AICon->MoveToActor(Pawn, 5.0f);
+    else {
+        CharacterState = EEnamyState::Chasing;
     }
-    else
-    {
-        AICon->StopMovement();
 
-        if (AttackMontage && !bIsAttacking)
+    AAIController* AI = Cast<AAIController>(GetController());
+
+    if (AI)
+    {
+        UBlackboardComponent* BB = AI->GetBlackboardComponent();
+        if (BB)
         {
-            PlayAnimMontage(AttackMontage);
-            bIsAttacking = true;
+            BB->SetValueAsEnum("EnemyState", (uint8)CharacterState);
+            BB->SetValueAsObject("CombatTarget", Pawn);
         }
+    }
+}
+
+void AABaseEnemyCharacter::TryAttack()
+{
+    if (AttackMontage && !bIsAttacking)
+    {
+        PlayAnimMontage(AttackMontage);
+        bIsAttacking = true;
     }
 }
 
@@ -68,21 +96,35 @@ void AABaseEnemyCharacter::DisableWeaponCollision()
     if (CurrentWeapon)
         CurrentWeapon->DisableCollision();
     bIsAttacking = false;
-}
 
-void AABaseEnemyCharacter::Hit()
-{
-    if (GetHitMontage)
+    CharacterState = EEnamyState::Chasing;
+
+    AAIController* AI = Cast<AAIController>(GetController());
+
+    if (AI)
     {
-        PlayAnimMontage(GetHitMontage);
-        if (MySound) {
-            UGameplayStatics::PlaySoundAtLocation(this, MySound, GetActorLocation());
+        UBlackboardComponent* BB = AI->GetBlackboardComponent();
+        if (BB)
+        {
+            BB->SetValueAsEnum("EnemyState", (uint8)CharacterState);
         }
     }
 }
 
-void AABaseEnemyCharacter::Death()
+void AABaseEnemyCharacter::GetHit_Implementation(int value) {
+    Super::GetHit_Implementation(value);
+    if (GetHitMontage) {
+        PlayAnimMontage(GetHitMontage);
+        CurrentWeapon->DisableCollision();
+    }
+    if (MySound) {
+        UGameplayStatics::PlaySoundAtLocation(this, MySound, GetActorLocation());
+    }
+}
+
+void AABaseEnemyCharacter::Death_Implementation() 
 {
-    UE_LOG(LogTemp, Warning, TEXT("Character is dead"));
+    if (CurrentWeapon)
+        CurrentWeapon->Destroy();
     Destroy();
 }

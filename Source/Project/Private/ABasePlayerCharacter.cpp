@@ -8,6 +8,8 @@
 #include "InteractionInterface.h"   
 #include "Components/InputComponent.h"
 #include "InteractionComponent.h" 
+#include <Kismet/GameplayStatics.h>
+#include "Weapon.h"
 
 AABasePlayerCharacter::AABasePlayerCharacter()
 {
@@ -60,8 +62,13 @@ void AABasePlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 void AABasePlayerCharacter::Move(const FInputActionValue& Value)
 {
 	FVector2D Movement = Value.Get<FVector2D>();
-	if (Controller != nullptr && !bIsAttacking)
+	if (Controller != nullptr && (CharacterState == ECharacterState::Idle || CharacterState == ECharacterState::OutOfStamina))
 	{
+		GetMesh()->GetAnimInstance()->StopAllMontages(0.2f);
+
+		if (CharacterState == ECharacterState::OutOfStamina)
+			Movement *= 0.5f;
+
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
@@ -92,6 +99,11 @@ void AABasePlayerCharacter::EquipWeapon(AWeapon* Weapon)
 {
 	if (!Weapon) return;
 
+	if (Weapon->IsEquiped()) 
+	{
+		return;
+	}
+
 	USkeletalMeshComponent* CharacterMesh = GetMesh();
 	if (CharacterMesh)
 	{
@@ -112,12 +124,38 @@ void AABasePlayerCharacter::EquipWeapon(AWeapon* Weapon)
 
 void AABasePlayerCharacter::Attack(const FInputActionValue& Value)
 {
-	if (AttackMontage && !bIsAttacking)
+	if (!CurrentWeapon || GetCharacterMovement()->IsFalling() || CharacterState != ECharacterState::Idle || !AttackMontage) return;
+	if (!CanPayStaminaCost(StaminaCostAttack))
 	{
-		bIsAttacking = true;
-		PlayAnimMontage(AttackMontage);
+		CharacterState = ECharacterState::OutOfStamina;
+
+		FTimerHandle TimerHandle;
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
+			{
+				CharacterState = ECharacterState::Idle;
+			}, 1, false);
+		return;
 	}
+
+	PayStamina(StaminaCostAttack);
+	CharacterState = ECharacterState::Attacking;
+	PlayAnimMontage(AttackMontage);
 }
+
+void AABasePlayerCharacter::GetHit_Implementation(int value)
+{
+	if (GetHitMontage)
+	{
+		PlayAnimMontage(GetHitMontage);
+		if (CurrentWeapon)	CurrentWeapon->DisableCollision();
+		CharacterState = ECharacterState::GettingHit;
+	}
+	if (MySound) {
+		UGameplayStatics::PlaySoundAtLocation(this, MySound, GetActorLocation());
+	}
+	Super::GetHit_Implementation(value);
+}
+
 
 void AABasePlayerCharacter::EnableWeaponCollision()
 {
@@ -129,10 +167,18 @@ void AABasePlayerCharacter::DisableWeaponCollision()
 {
 	if (CurrentWeapon)
 		CurrentWeapon->DisableCollision();
+	if (CharacterState != ECharacterState::Dead)
+		CharacterState = ECharacterState::Idle;
 	bIsAttacking = false;
 }
 
-void AABasePlayerCharacter::Death()
+void AABasePlayerCharacter::Death_Implementation()
 {
+	CharacterState = ECharacterState::Dead;
 	UE_LOG(LogTemp, Warning, TEXT("Player is dead"));
+
+	if (CurrentWeapon)
+		CurrentWeapon->Destroy();
+	Destroy();
+
 }

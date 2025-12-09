@@ -5,6 +5,7 @@
 #include <Perception/PawnSensingComponent.h>
 #include "Weapon.h"
 #include <Components/AudioComponent.h>
+#include "PownStateEnum.h"
 #include "ABaseEnemyCharacter.generated.h"
 
 UCLASS()
@@ -19,6 +20,9 @@ public:
 
     virtual void DisableWeaponCollision() override;
 
+    UFUNCTION(BlueprintCallable)
+    void TryAttack();
+
 protected:
     bool bIsAttacking = false;
     virtual void BeginPlay() override;
@@ -29,9 +33,10 @@ protected:
     UFUNCTION()
     void OnSeePawn(APawn* Pawn);
 
-    virtual void Death() override;
 
-    virtual void Hit() override;
+    virtual void GetHit_Implementation(int value) override;
+
+    virtual void Death_Implementation() override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
     float AttackRange = 200.f;
@@ -50,4 +55,10 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
     USoundBase* MySound;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+    EEnamyState CharacterState;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+    AActor* TargetActor;
 };

@@ -5,6 +5,9 @@
 #include "Combat.h"
 #include "ABaseCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStaminaChanged, float, NewStamina);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthChanged, int, NewHealth);
+
 UCLASS()
 class PROJECT_API AABaseCharacter : public ACharacter, public ICombat
 {
@@ -21,14 +24,32 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	int Health;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
-	int MaxHealth;
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health HP")
+	int Health;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health HP")
+	int MaxHealth;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina SP")
+	float Stamina;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina SP")
+	float MaxStamina;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina SP")
+	float StaminaRegen;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stamina SP")
+	float StaminaCostAttack;
+
+
+	bool CanPayStaminaCost(float Cost);
+	void PayStamina(float Cost);
 	virtual void Tick(float DeltaTime) override;
 	virtual void GetHit_Implementation(int value) override;
-	virtual void Death();
-	virtual void Hit();
+
+	UPROPERTY(BlueprintAssignable, Category = "Stamina SP")
+	FOnStaminaChanged OnStaminaChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Health HP")
+	FOnHealthChanged OnHealthChanged;
 };

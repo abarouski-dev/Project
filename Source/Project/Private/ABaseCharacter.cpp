@@ -15,29 +15,31 @@ void AABaseCharacter::BeginPlay()
 void AABaseCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	PayStamina(-StaminaRegen * DeltaTime);
 }
 
 void AABaseCharacter::GetHit_Implementation(int value)
 {
 	Health -= value;
-	if (value > 0) {
-		Hit();
-	}
+	OnHealthChanged.Broadcast(Health);
 	if (Health > MaxHealth) {
 		Health = MaxHealth;
 	}
 	if (Health <= 0)
 	{
-		Death();
+		Execute_Death(this);
 	}
 }
 
-void AABaseCharacter::Death()
+bool AABaseCharacter::CanPayStaminaCost(float Cost) 
 {
+	return Stamina > Cost;
 }
 
-void AABaseCharacter::Hit()
+void AABaseCharacter::PayStamina(float Cost) 
 {
+	Stamina = FMath::Clamp(Stamina - Cost, 0, MaxStamina);
+	OnStaminaChanged.Broadcast(Stamina);
 }
 
 void AABaseCharacter::EnableWeaponCollision()
